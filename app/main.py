@@ -138,3 +138,50 @@ def registrar_salida(datos: schemas.SalidaRequest, db: Session = Depends(get_db)
         "total_pagar": calculo["total_a_pagar"],
         "mensaje": "Ticket cerrado exitosamente"
     }
+
+# ... (Tus imports deben incluir models y database)
+
+@app.post("/admin/sembrar-datos-iniciales/")
+def sembrar_datos(db: Session = Depends(get_db)):
+    """
+    Este botón crea las tarifas básicas si la base de datos está vacía.
+    Úsalo solo una vez al desplegar.
+    """
+    # 1. Verificar si ya existen tarifas para no duplicar
+    tarifas_existen = db.query(models.Tarifa).count()
+    if tarifas_existen > 0:
+        return {"mensaje": "⚠️ La base de datos ya tiene tarifas. No se hizo nada."}
+
+    # 2. Crear Tarifas Básicas
+    tarifa_hora = models.Tarifa(
+        nombre="1 Hora",
+        costo_base=100.0,
+        minutos_base=60,
+        costo_minuto_extra=2.5,
+        activa=True
+    )
+    
+    tarifa_libre = models.Tarifa(
+        nombre="Tiempo Libre",
+        costo_base=180.0,
+        minutos_base=480, # 8 horas (simbólico)
+        costo_minuto_extra=0.0,
+        activa=True
+    )
+
+    # 3. Guardar en Base de Datos
+    db.add(tarifa_hora)
+    db.add(tarifa_libre)
+    
+    # Opcional: Crear también un Instructor de prueba
+    profe = models.Instructor(
+        nombre="Instructor Prueba",
+        especialidad="General",
+        honorarios_por_sesion=150.0,
+        activo=True
+    )
+    db.add(profe)
+
+    db.commit()
+    
+    return {"mensaje": "✅ ¡Datos iniciales sembrados con éxito! (Tarifas e Instructor creados)"}
