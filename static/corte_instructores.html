@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Corte de Instructores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">👮‍♂️ Corte de Instructores</a>
+            <div>
+                <a href="index.html" class="btn btn-outline-light btn-sm">Taquilla</a>
+                <a href="escuela.html" class="btn btn-outline-light btn-sm">Escuela</a>
+                <a href="instructores.html" class="btn btn-outline-light btn-sm">Profesores</a>
+                <a href="acceso.html" class="btn btn-outline-light btn-sm">Acceso</a>
+                <a href="corte_instructores.html" class="btn btn-warning btn-sm fw-bold text-dark">Corte Inst.</a>
+                <a href="cierre.html" class="btn btn-danger btn-sm text-white ms-2">📅 Cierre Caja</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="mb-4">Recepción de Tickets de Instructores</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 bg-white">
+                    <h4>1. Escanear Ticket Entregado</h4>
+                    <p class="text-muted">Escanea el ticket que te entrega el profesor.</p>
+
+                    <input type="text" id="inputTicket" class="form-control form-control-lg mb-3"
+                        placeholder="Click aquí y escanea..." autofocus>
+
+                    <div id="resultadoEscaneo" class="alert d-none"></div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 bg-white">
+                    <h4>2. Calcular Pago a Instructor</h4>
+                    <select id="selectInstructor" class="form-select mb-3">
+                        <option value="">Selecciona Instructor...</option>
+                    </select>
+                    <button onclick="verCorte()" class="btn btn-primary w-100">Ver Total a Pagar</button>
+
+                    <div id="panelPago" class="mt-4 d-none text-center">
+                        <h5>Total Honorarios Acumulados:</h5>
+                        <h1 class="text-success" id="montoTotal">$0.00</h1>
+                        <p>Por <span id="cantTickets">0</span> tickets entregados.</p>
+                        <hr>
+                        <button class="btn btn-outline-secondary">Imprimir Recibo de Pago</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "";
+
+        // 1. Cargar Instructores al inicio
+        fetch(`${API_URL}/escuela/instructores/`)
+            .then(r => r.json())
+            .then(data => {
+                const sel = document.getElementById('selectInstructor');
+                data.forEach(p => {
+                    sel.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+                });
+            });
+
+        // 2. Lógica de Escaneo (Cuando el profe entrega el ticket)
+        document.getElementById('inputTicket').addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const ticket = e.target.value;
+                const alerta = document.getElementById('resultadoEscaneo');
+
+                try {
+                    const res = await fetch(`${API_URL}/gestion-instructores/procesar-ticket/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ticket_id: ticket })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        alerta.className = "alert alert-success";
+                        alerta.innerHTML = `✅ Ticket procesado para <b>${data.instructor}</b> (+$${data.honorarios_sumados})`;
+                    } else {
+                        alerta.className = "alert alert-danger";
+                        alerta.textContent = data.detail || "Error al procesar";
+                    }
+                } catch (err) {
+                    alerta.className = "alert alert-danger";
+                    alerta.textContent = "Error de conexión";
+                }
+
+                alerta.classList.remove('d-none');
+                e.target.value = ''; // Limpiar para el siguiente ticket
+            }
+        });
+
+        // 3. Ver cuánto se le debe al profe
+        async function verCorte() {
+            const id = document.getElementById('selectInstructor').value;
+            if (!id) return;
+
+            const res = await fetch(`${API_URL}/gestion-instructores/corte-dia/${id}`);
+            const data = await res.json();
+
+            document.getElementById('montoTotal').textContent = `$${data.total_honorarios}`;
+            document.getElementById('cantTickets').textContent = data.tickets_procesados;
+            document.getElementById('panelPago').classList.remove('d-none');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Corte de Caja Diario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilos solo para impresión */
+        /* Estilos solo para impresión */
+        @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            body,
+            html {
+                margin: 0;
+                padding: 0;
+                background: white;
+                height: 100%;
+                width: 100%;
+            }
+
+            .container {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .card {
+                border: 1px solid #000;
+                box-shadow: none;
+                margin: 0 !important;
+                padding: 20px !important;
+                /* Reducir padding interno */
+            }
+
+            h2,
+            h4,
+            h5 {
+                margin-top: 10px;
+                margin-bottom: 5px;
+            }
+        }
+
+        .money {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .bg-money {
+            background-color: #d1e7dd;
+        }
+    </style>
+</head>
+
+<body class="bg-light p-4">
+
+    <div class="container" style="max-width: 800px;">
+
+        <div class="d-flex justify-content-between mb-4 no-print">
+            <a href="index.html" class="btn btn-secondary">⬅ Volver</a>
+            <div class="d-flex gap-2">
+                <input type="date" id="fechaCorte" class="form-control">
+                <button onclick="cargarCorte()" class="btn btn-primary">Consultar</button>
+                <button onclick="window.print()" class="btn btn-dark"><i class="bi bi-printer"></i> A4</button>
+                <button onclick="imprimirCorteTermico()" class="btn btn-warning"><i class="bi bi-receipt"></i>
+                    POS</button>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <div class="text-center mb-4">
+                <h2>📋 Corte de Caja</h2>
+                <h4 id="lblFecha">---</h4>
+                <p>PCTronicMex Pista de Hielo</p>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-6">
+                    <div class="card bg-money p-3 text-center">
+                        <small>EFECTIVO EN CAJÓN</small>
+                        <h2 class="money text-success" id="valEfectivo">$0.00</h2>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card bg-light p-3 text-center">
+                        <small>TERMINAL / BANCO</small>
+                        <h2 class="money text-primary" id="valBanco">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <h5 class="mt-4">🎫 Taquilla (Público General)</h5>
+            <table class="table table-sm table-bordered">
+                <tr>
+                    <td>Tickets Vendidos</td>
+                    <td class="text-end" id="tqTickets">0</td>
+                </tr>
+                <tr>
+                    <td>Venta de Andaderas</td>
+                    <td class="text-end" id="tqAndaderas">$0.00</td>
+                </tr>
+                <tr class="table-secondary fw-bold">
+                    <td>TOTAL TAQUILLA</td>
+                    <td class="text-end" id="tqTotal">$0.00</td>
+                </tr>
+            </table>
+
+            <h5 class="mt-4">🎓 Escuela (Mensualidades)</h5>
+            <table class="table table-sm table-bordered">
+                <tr>
+                    <td>Pagos Recibidos</td>
+                    <td class="text-end" id="escPagos">0</td>
+                </tr>
+                <tr class="table-secondary fw-bold">
+                    <td>TOTAL ESCUELA</td>
+                    <td class="text-end" id="escTotal">$0.00</td>
+                </tr>
+            </table>
+
+            <h5 class="mt-4 text-danger">🔻 Egresos / Pagos</h5>
+            <table class="table table-sm table-bordered">
+                <tr>
+                    <td>Pago a Instructores (Honorarios)</td>
+                    <td class="text-end text-danger" id="egrInstructores">-$0.00</td>
+                </tr>
+            </table>
+
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <h4>BALANCE NETO DEL DÍA:</h4>
+                <h2 class="money" id="valNeto">$0.00</h2>
+            </div>
+
+            <div class="mt-5 text-center text-muted">
+                <p>__________________________<br>Firma de Cajero</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "";
+
+        // Cargar fecha de hoy por defecto
+        document.getElementById('fechaCorte').valueAsDate = new Date();
+        cargarCorte();
+
+        async function cargarCorte() {
+            const fecha = document.getElementById('fechaCorte').value;
+            try {
+                const res = await fetch(`${API_URL}/reportes/cierre-dia/?fecha_consulta=${fecha}`);
+                const data = await res.json();
+
+                // Llenar datos Generales (Guardamos data en variable global para imprimir despues si se quiere)
+                window.datosCorte = data;
+
+                document.getElementById('lblFecha').textContent = data.fecha;
+                document.getElementById('valEfectivo').textContent = formatearDinero(data.resumen_general.dinero_en_caja);
+                document.getElementById('valBanco').textContent = formatearDinero(data.resumen_general.dinero_banco);
+
+                // Taquilla
+                document.getElementById('tqTickets').textContent = data.desglose_taquilla.tickets_vendidos;
+                document.getElementById('tqAndaderas').textContent = formatearDinero(data.desglose_taquilla.ingreso_andaderas);
+                document.getElementById('tqTotal').textContent = formatearDinero(data.desglose_taquilla.total);
+
+                // Escuela
+                document.getElementById('escPagos').textContent = data.desglose_escuela.pagos_recibidos;
+                document.getElementById('escTotal').textContent = formatearDinero(data.desglose_escuela.total);
+
+                // Egresos
+                document.getElementById('egrInstructores').textContent = "-" + formatearDinero(data.egresos_operativos.pagos_a_instructores);
+
+                // Final
+                document.getElementById('valNeto').textContent = formatearDinero(data.balance_neto);
+            } catch (e) {
+                console.error(e);
+                alert("Error cargando reporte. ¿El servidor está corriendo?");
+            }
+        }
+
+        function imprimirCorteTermico() {
+            if (!window.datosCorte) { alert("Primero consulta el corte."); return; }
+            const data = window.datosCorte;
+
+            const popup = window.open('', '_blank', 'width=400,height=700');
+            const html = `
+                <html>
+                <head>
+                    <title>Corte ${data.fecha}</title>
+                    <style>
+                        @page { margin: 0; size: auto; }
+                        body { 
+                            font-family: 'Courier New', monospace; 
+                            width: 72mm; 
+                            margin: 5px auto; 
+                            font-size: 12px;
+                        }
+                        .center { text-align: center; }
+                        .bold { font-weight: bold; }
+                        .divider { border-top: 1px dashed #000; margin: 8px 0; }
+                        .row { display: flex; justify-content: space-between; }
+                        h2 { margin: 5px 0; font-size: 16px; }
+                        .big { font-size: 16px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="center">
+                        <div class="bold big">PCTronicMex</div>
+                        <div>Pista de Hielo</div>
+                        <div class="divider"></div>
+                        <div class="bold">CORTE DE CAJA</div>
+                        <div>${data.fecha}</div>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="bold center">RESUMEN EFECTIVO</div>
+                    <div class="row"><span>En Cajón:</span> <span class="bold">${formatearDinero(data.resumen_general.dinero_en_caja)}</span></div>
+                    <div class="row"><span>Bancos/Card:</span> <span>${formatearDinero(data.resumen_general.dinero_banco)}</span></div>
+
+                    <div class="divider"></div>
+
+                    <div class="bold">TAQUILLA</div>
+                    <div class="row"><span>Tickets:</span> <span>${data.desglose_taquilla.tickets_vendidos}</span></div>
+                    <div class="row"><span>Total:</span> <span>${formatearDinero(data.desglose_taquilla.total)}</span></div>
+
+                    <br>
+                    <div class="bold">ESCUELA</div>
+                    <div class="row"><span>Pagos:</span> <span>${data.desglose_escuela.pagos_recibidos}</span></div>
+                    <div class="row"><span>Total:</span> <span>${formatearDinero(data.desglose_escuela.total)}</span></div>
+
+                    <div class="divider"></div>
+                    <div class="row bold">
+                        <span>BALANCE NETO:</span>
+                        <span class="big">${formatearDinero(data.balance_neto)}</span>
+                    </div>
+                    <div class="divider"></div>
+                    <br><br>
+                    <div class="center">_______________________<br>Firma Cajero</div>
+                    
+                    <script>
+                        window.onload = function() { window.print(); }
+                    <\/script>
+                </body>
+                </html>
+            `;
+            popup.document.write(html);
+            popup.document.close();
+        }
+
+        function formatearDinero(monto) {
+            return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(monto);
+        }
+    </script>
+</body>
+
+</html>

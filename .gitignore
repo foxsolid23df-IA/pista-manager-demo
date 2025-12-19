@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+.env
+pista_hielo.db
+.DS_Store
+postgres_data/
+*.pyc

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # --- SERVICIO 1: BASE DE DATOS ---
+  db:
+    image: postgres:15-alpine
+    container_name: pista_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- SERVICIO 2: TU APLICACIÓN PYTHON ---
+  web:
+    build: .
+    container_name: pista_app
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+    depends_on:
+      db:
+        condition: service_healthy
+    # Aquí sobreescribimos la variable SERVER para que apunte al contenedor 'db'
+    environment:
+      - POSTGRES_SERVER=db 
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=5432
+      # Usamos una sintaxis segura por si no está definido
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-}
+
+volumes:
+  postgres_data:

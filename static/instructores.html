@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión Instructores - PCTronicMex</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
+    <style>
+        #calendar {
+            max-height: 800px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">👥 Gestión de Profesores</a>
+            <div>
+                <a href="index.html" class="btn btn-outline-light btn-sm">Taquilla</a>
+                <a href="escuela.html" class="btn btn-outline-light btn-sm">Escuela</a>
+                <a href="instructores.html" class="btn btn-light btn-sm fw-bold">Profesores</a>
+                <a href="acceso.html" class="btn btn-outline-light btn-sm">Acceso</a>
+                <a href="corte_instructores.html" class="btn btn-warning btn-sm text-dark">Corte</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <div class="row">
+            <div class="col-md-3">
+
+                <!-- CARD NUEVO PROFESOR -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5>Nuevo Profesor</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="formInstructor">
+                            <div class="mb-3">
+                                <label>Nombre</label>
+                                <input type="text" id="nombreProfe" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label>Especialidad</label>
+                                <select id="especialidadProfe" class="form-select">
+                                    <option>Patinaje Artístico</option>
+                                    <option>Hockey</option>
+                                    <option>Básico Niños</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Guardar Profesor</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- CARD NUEVA CLASE (AHORA VISIBLE) -->
+                <div class="card shadow-sm mb-4 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5>📅 Programar Clase</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="formClase">
+                            <div class="mb-2">
+                                <label>Nombre Clase</label>
+                                <input type="text" id="nombreClase" class="form-control" placeholder="Ej: Infantil A"
+                                    required>
+                            </div>
+                            <div class="mb-2">
+                                <label>Instructor</label>
+                                <select id="instructorClase" class="form-select" required>
+                                    <option selected disabled>Seleccionar...</option>
+                                </select>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    <label>Día</label>
+                                    <select id="diaClase" class="form-select">
+                                        <option>Lunes</option>
+                                        <option>Martes</option>
+                                        <option>Miércoles</option>
+                                        <option>Jueves</option>
+                                        <option>Viernes</option>
+                                        <option>Sábado</option>
+                                        <option>Domingo</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label>Hr Inicio</label>
+                                    <select id="horaClase" class="form-select">
+                                        <option>08:00</option>
+                                        <option>09:00</option>
+                                        <option>10:00</option>
+                                        <option>11:00</option>
+                                        <option>12:00</option>
+                                        <option>13:00</option>
+                                        <option>14:00</option>
+                                        <option>15:00</option>
+                                        <option>16:00</option>
+                                        <option>17:00</option>
+                                        <option>18:00</option>
+                                        <option>19:00</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Guardar Clase</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- CARD LISTA PROFESORES -->
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5>Lista de Profesores</h5>
+                    </div>
+                    <ul class="list-group list-group-flush" id="listaProfesores">
+                        <li class="list-group-item">Cargando...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="mb-3">Horarios de Clases (Semanal)</h4>
+                        <div id='calendar'></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="instructores.js"></script>
+</body>
+
+</html>

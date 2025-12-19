@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pista Manager - Scanner</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+            --accent-color: #3b82f6;
+            --success-color: #22c55e;
+            --warning-color: #eab308;
+            --error-color: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+
+        #scanner-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        #barcode-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 4px solid var(--accent-color);
+            color: var(--text-color);
+            font-size: 4rem;
+            text-align: center;
+            outline: none;
+            padding: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        #barcode-input:focus {
+            border-bottom-color: var(--success-color);
+        }
+
+        #result-display {
+            margin-top: 3rem;
+            font-size: 3rem;
+            font-weight: bold;
+            min-height: 4rem;
+            padding: 1rem;
+            border-radius: 1rem;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .status-entry { color: var(--success-color); }
+        .status-payment { color: var(--warning-color); }
+        .status-error { color: var(--error-color); }
+
+        .mode-toggle {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            color: #888;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>⛸️ Pista Manager</h1>
+
+    <div id="scanner-container">
+        <input type="text" id="barcode-input" placeholder="Escanear Ticket..." autofocus autocomplete="off">
+        
+        <div id="result-display"></div>
+
+        <div class="mode-toggle">
+            <span>Modo Inteligente (Auto Detectar)</span>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('barcode-input');
+        const display = document.getElementById('result-display');
+        const API_URL = 'http://localhost:8000';
+        const DEFAULT_TARIFA_ID = 1; // Asegúrate de crear una tarifa con ID 1 en la BD
+
+        input.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const ticketId = input.value.trim();
+                if (!ticketId) return;
+
+                input.value = ''; // Limpiar input para siguiente scan
+                display.innerText = 'Procesando...';
+                display.className = '';
+
+                await processTicket(ticketId);
+            }
+        });
+
+        async function processTicket(ticketId) {
+            try {
+                // 1. Intentamos Check-OUT primero
+                // Si el ticket tiene sesión abierta, nos devolverá el cobro.
+                let response = await fetch(`${API_URL}/routers/publico/check-out/?ticket_id=${ticketId}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`A PAGAR: $${data.total_a_pagar}`, 'payment');
+                    return;
+                }
+
+                // Si da 404, asumimos que no hay sesión abierta -> Intentamos Check-IN
+                if (response.status === 404) {
+                    response = await fetch(`${API_URL}/routers/publico/check-in/?ticket_id=${ticketId}&tarifa_id=${DEFAULT_TARIFA_ID}`, {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        showResult(`BIENVENIDO`, 'entry');
+                    } else {
+                        const errorData = await response.json();
+                        showResult(`ERROR: ${errorData.detail || 'No se pudo registrar'}`, 'error');
+                    }
+                } else {
+                    showResult('Error de conexión', 'error');
+                }
+
+            } catch (error) {
+                console.error(error);
+                showResult('Error del sistema', 'error');
+            }
+        }
+
+        function showResult(text, type) {
+            display.innerText = text;
+            display.className = `status-${type}`;
+            
+            // Sonido de confirmación (opcional)
+            // const audio = new Audio(type === 'error' ? 'error.mp3' : 'success.mp3');
+            // audio.play().catch(e => {});
+        }
+
+        // Mantener el foco siempre en el input
+        document.addEventListener('click', () => input.focus());
+    </script>
+</body>
+</html>

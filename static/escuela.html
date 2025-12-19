@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración Escuela - PCTronicMex</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">⛸️ Escuela de Patinaje</a>
+            <div>
+                <a href="index.html" class="btn btn-outline-light btn-sm">Taquilla</a>
+                <a href="escuela.html" class="btn btn-light btn-sm fw-bold">Escuela</a>
+                <a href="instructores.html" class="btn btn-outline-light btn-sm">Profesores</a>
+                <a href="acceso.html" class="btn btn-outline-light btn-sm">Acceso</a>
+                <a href="corte_instructores.html" class="btn btn-warning btn-sm text-dark">Corte</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Listado de Alumnos</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoAlumno">
+                <i class="bi bi-person-plus-fill"></i> Nuevo Alumno
+            </button>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Nivel</th>
+                            <th>Vencimiento</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaAlumnos">
+                        <tr>
+                            <td colspan="6" class="text-center">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalNuevoAlumno" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Inscribir Alumno</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formNuevoAlumno">
+                        <div class="mb-3">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="nombreAlumno" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label>Teléfono</label>
+                            <input type="text" id="telAlumno" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label>Nivel</label>
+                            <select id="nivelAlumno" class="form-select">
+                                <option>Básico 1</option>
+                                <option>Intermedio</option>
+                                <option>Avanzado</option>
+                                <option>Hockey</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalPago" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Registrar Mensualidad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Alumno ID: <strong id="pagoAlumnoId"></strong></p>
+                    <h4 id="pagoAlumnoNombre" class="text-center mb-3"></h4>
+
+                    <div class="mb-3">
+                        <label>Monto a Pagar ($)</label>
+                        <input type="number" id="montoPago" class="form-control form-control-lg" value="500">
+                    </div>
+                    <div class="mb-3">
+                        <label>Concepto</label>
+                        <input type="text" id="conceptoPago" class="form-control" value="Mensualidad">
+                    </div>
+                    <button onclick="enviarPago()" class="btn btn-success w-100 btn-lg">CONFIRMAR PAGO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="escuela.js"></script>
+</body>
+
+</html>
