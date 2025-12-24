@@ -99,7 +99,6 @@
             }
 
             // 1. DIBUJAR EL PODIO (Top 3)
-            // Reordenamos visualmente: 2do (Plata) - 1ro (Oro) - 3ro (Bronce)
             const ordenPodio = [1, 0, 2];
 
             ordenPodio.forEach(idx => {
@@ -109,14 +108,15 @@
                     let altura = idx === 0 ? '300px' : (idx === 1 ? '250px' : '220px');
                     let medalla = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉');
 
+                    // CAMBIO AQUÍ: Usamos c.puntos_mes en lugar de dinero_estimado
                     podioDiv.innerHTML += `
                         <div class="col-4">
                             <div class="card card-podio ${clase} mb-3" style="min-height: ${altura};">
-                                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                                <div class="card-body d-flex flex-col justify-content-center align-items-center">
                                     <div class="avatar mb-2">${medalla}</div>
-                                    <h3>${c.nombre}</h3>
-                                    <p class="h5">$${c.dinero_estimado}</p>
-                                    <small>${c.visitas} visitas</small>
+                                    <h3 class="fw-bold text-dark">${c.nombre}</h3>
+                                    <span class="badge bg-dark fs-6 mb-2">${c.puntos_mes} Puntos</span>
+                                    <small class="text-dark">${c.visitas} visitas</small>
                                 </div>
                             </div>
                         </div>
@@ -125,7 +125,10 @@
             });
 
             // 2. DIBUJAR LISTA (Del 4 en adelante)
-            // Si hay 3 o menos, esto no hace nada, está bien.
+            // CAMBIO AQUÍ: Actualizamos el encabezado de la tabla dinámicamente o en el HTML
+            const headerDinero = document.querySelector("thead tr th:last-child");
+            if (headerDinero) headerDinero.textContent = "Puntos Acumulados";
+
             for (let i = 3; i < clientes.length; i++) {
                 const c = clientes[i];
                 listaBody.innerHTML += `
@@ -133,7 +136,9 @@
                         <td>${i + 1}</td>
                         <td>${c.nombre}</td>
                         <td>${c.visitas}</td>
-                        <td class="text-end text-success">$${c.dinero_estimado}</td>
+                        <td class="text-end text-warning fw-bold">
+                            <i class="bi bi-star-fill"></i> ${c.puntos_mes}
+                        </td>
                     </tr>
                 `;
             }
