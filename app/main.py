@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles # <--- NUEVO: Importar esto
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from datetime import datetime
 
 # Importamos nuestros módulos anteriores
@@ -209,3 +210,27 @@ def sembrar_datos(db: Session = Depends(get_db)):
     db.commit()
     
     return {"mensaje": "✅ ¡Datos iniciales sembrados con éxito! (Tarifas e Instructor creados)"}
+
+@app.get("/admin/reparar-tablas/")
+def reparar_tablas_viejas(db: Session = Depends(get_db)):
+    """
+    Agrega las columnas faltantes a la tabla sesiones_patinaje.
+    """
+    try:
+        # 1. Agregar columna 'cliente_id' (Para Lealtad)
+        # Nota: Usamos 'ADD COLUMN IF NOT EXISTS' para que no falle si ya la tienes.
+        db.execute(text("ALTER TABLE sesiones_patinaje ADD COLUMN IF NOT EXISTS cliente_id INTEGER;"))
+        
+        # 2. Agregar columna 'metodo_pago' (Para Cortes de Caja)
+        # Postgres 9.6+ soporta IF NOT EXISTS en columnas, pero si es vieja versión:
+        # La instrucción estándar es: ADD COLUMN ...
+        # Para evitar fallo en SQLite/Postgres genérico usamos un try-catch implícito del comando
+        # pero con 'IF NOT EXISTS' es lo más limpio en Postgres moderno.
+        db.execute(text("ALTER TABLE sesiones_patinaje ADD COLUMN IF NOT EXISTS metodo_pago VARCHAR DEFAULT 'Efectivo';"))
+        
+        # 3. Forzar guardar cambios
+        db.commit()
+        
+        return {"mensaje": "✅ Tablas reparadas: Se agregaron las columnas cliente_id y metodo_pago."}
+    except Exception as e:
+        return {"error": f"Hubo un problema: {str(e)}"}
