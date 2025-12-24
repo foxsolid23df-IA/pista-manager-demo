@@ -9,6 +9,7 @@ class EntradaRequest(BaseModel):
     renta_andadera: bool = False  # Checkbox en el frontend
     instructor_id: Optional[int] = None # Dropdown en el frontend (puede ser null)
     metodo_pago: str = "Efectivo" # NUEVO: "Efectivo" o "Tarjeta"
+    cliente_id: Optional[int] = None # NUEVO: ID Cliente lealtad
 
 class SalidaRequest(BaseModel):
     ticket_id: str

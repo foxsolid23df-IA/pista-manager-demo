@@ -31,11 +31,12 @@ app.mount("/ui", StaticFiles(directory="static", html=True), name="static")
 # --- INCLUIR ROUTERS ---
 # --- INCLUIR ROUTERS ---
 # --- INCLUIR ROUTERS ---
-from .routers import escuela, instructores, acceso, reportes
+from .routers import escuela, instructores, acceso, reportes, lealtad
 app.include_router(escuela.router)
 app.include_router(instructores.router)
 app.include_router(acceso.router)
 app.include_router(reportes.router)
+app.include_router(lealtad.router)
 
 # --- RUTAS (ENDPOINTS) ---
 
@@ -72,6 +73,29 @@ def registrar_entrada(datos: schemas.EntradaRequest, db: Session = Depends(get_d
         tiene_instructor=True if datos.instructor_id else False,
         metodo_pago=datos.metodo_pago
     )
+
+    # --- LÓGICA LEALTAD (CLUB PISTA) ---
+    if datos.cliente_id:
+        cliente = db.query(models.ClienteFrecuente).filter(models.ClienteFrecuente.id == datos.cliente_id).first()
+        if cliente:
+            # Calcular costo base para puntos
+            costo_estimado = tarifa.costo_base
+            if datos.renta_andadera: costo_estimado += 50.0
+            
+            # Regla: 1 Punto por cada $10 pesos
+            puntos_ganados = int(costo_estimado / 10)
+            
+            cliente.puntos_acumulados += puntos_ganados
+            
+            # Guardar historial
+            log = models.HistorialPuntos(
+                cliente_id=cliente.id,
+                puntos=puntos_ganados,
+                motivo=f"Visita Ticket {ticket_codigo}"
+            )
+            db.add(log)
+            # Vincular ticket al cliente
+            nueva_sesion.cliente_id = cliente.id
     
     db.add(nueva_sesion)
     db.flush() # Guardamos temporalmente para obtener el ID de la sesión

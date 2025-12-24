@@ -50,6 +50,10 @@ class SesionPatinaje(Base):
     # Relación opcional para saber quién fue el instructor
     instructor = relationship("Instructor")
 
+    # NUEVO: Cliente Frecuente (Opcional)
+    cliente_id = Column(Integer, ForeignKey("clientes_frecuentes.id"), nullable=True)
+    cliente = relationship("ClienteFrecuente", back_populates="sesiones")
+
 # ==========================================
 # MÓDULO 2: ESCUELA (ACTUALIZADO)
 # ==========================================
@@ -153,3 +157,40 @@ class PagoEscuela(Base):
     
     # Relación
     alumno = relationship("Alumno", back_populates="pagos")
+
+
+# ==========================================
+# MÓDULO 3: CLUB PISTA (CLIENTES FRECUENTES / FIDELIDAD)
+# ==========================================
+
+class ClienteFrecuente(Base):
+    __tablename__ = "clientes_frecuentes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    # Datos Personales (Mínimos necesarios para seguridad)
+    nombre = Column(String)
+    telefono = Column(String, unique=True, index=True) # Usaremos el Celular como ID único
+    email = Column(String, nullable=True)
+    fecha_registro = Column(DateTime, default=datetime.now)
+    
+    # Sistema de Puntos
+    puntos_acumulados = Column(Integer, default=0)
+    nivel = Column(String, default="Bronce") # Bronce, Plata, Oro
+    activo = Column(Boolean, default=True) # Para borrado lógico / derecho al olvido
+    
+    # Relación para saber su historial
+    sesiones = relationship("SesionPatinaje", back_populates="cliente")
+    movimientos_puntos = relationship("HistorialPuntos", back_populates="cliente")
+
+class HistorialPuntos(Base):
+    """Auditoría de Puntos: Para saber por qué subieron o bajaron"""
+    __tablename__ = "historial_puntos"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes_frecuentes.id"))
+    
+    puntos = Column(Integer) # Puede ser positivo (+50) o negativo (-100 canje)
+    motivo = Column(String)  # "Visita Pista", "Canje Andadera", "Bono Cumpleaños"
+    fecha = Column(DateTime, default=datetime.now)
+    
+    cliente = relationship("ClienteFrecuente", back_populates="movimientos_puntos")

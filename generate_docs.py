@@ -96,6 +96,12 @@ C. Módulo Financiero - app/routers/reportes.py
 
 D. Módulo Escuela - app/routers/escuela.py
 - Gestión CRUD de Alumnos, Profesores y Pagos de Mensualidades.
+E. Módulo de Lealtad (Club Pista) - app/routers/lealtad.py
+- POST /lealtad/registro/: Inscripción rápida con Nombre y Celular.
+- GET /lealtad/buscar/{telefono}: Búsqueda de socio para asignar puntos en venta. 
+- GET /lealtad/top-mensual/: Generación de Ranking (Leaderboard) filtrado por mes.
+- POST /lealtad/canjear/: Redención de premios.
+- DELETE /lealtad/eliminar-datos/: Anonimización de datos personales (Derecho al Olvido).
 """
 pdf.add_section('4. API y Lógica de Negocio', api_text)
 

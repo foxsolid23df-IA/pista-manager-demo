@@ -51,11 +51,15 @@ async function registrarEntrada() {
     // Capturar método de pago
     const metodo = document.querySelector('input[name="metodoPago"]:checked').value;
 
+    // Capturar Socio (si existe)
+    const clienteIdV = document.getElementById('valClienteId').value;
+
     const datos = {
         tarifa_id: parseInt(tarifaId),
         renta_andadera: quiereAndadera,
         instructor_id: instructorSeleccionado ? parseInt(instructorSeleccionado) : null,
-        metodo_pago: metodo
+        metodo_pago: metodo,
+        cliente_id: clienteIdV ? parseInt(clienteIdV) : null
     };
 
     try {
@@ -242,8 +246,79 @@ async function registrarSalida() {
 }
 
 // Extra: Permitir dar ENTER en el input de salida (como un scanner real)
-document.getElementById('inputTicketSalida').addEventListener("keypress", function (event) {
-    if (event.key === "Enter") {
-        registrarSalida();
+// document.getElementById('inputTicketSalida') might not exist on index.html but exists in app.js legacy. 
+// Safe navigation
+const inputSalida = document.getElementById('inputTicketSalida');
+if (inputSalida) {
+    inputSalida.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            registrarSalida();
+        }
+    });
+}
+
+
+// ==========================================
+// MÓDULO LEALTAD (CLUB PISTA)
+// ==========================================
+
+async function buscarSocio() {
+    const tel = document.getElementById('buscadorSocio').value;
+    if (!tel) return;
+
+    try {
+        const res = await fetch(`${API_URL}/lealtad/buscar/${tel}`);
+        if (!res.ok) throw new Error();
+        const cliente = await res.json();
+
+        // Mostrar Datos
+        document.getElementById('lblSocioNombre').textContent = cliente.nombre;
+        document.getElementById('lblSocioPuntos').textContent = cliente.puntos_acumulados;
+        document.getElementById('valClienteId').value = cliente.id; // IMPORTANTE: Guardar ID oculto
+
+        // Estilos visuales
+        document.getElementById('infoSocio').classList.remove('d-none');
+        document.getElementById('buscadorSocio').classList.add('is-valid');
+        document.getElementById('buscadorSocio').classList.remove('is-invalid');
+
+    } catch (e) {
+        // No encontrado con alertas suaves
+        document.getElementById('infoSocio').classList.add('d-none');
+        document.getElementById('valClienteId').value = ""; // Limpiar ID anterior si hubo
+        document.getElementById('buscadorSocio').classList.add('is-invalid');
     }
-});
+}
+
+async function registrarSocio() {
+    const nombre = document.getElementById('regNombre').value;
+    const tel = document.getElementById('regTel').value;
+
+    if (!nombre || !tel) {
+        alert("Llena nombre y teléfono");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/lealtad/registro/?nombre=${nombre}&telefono=${tel}`, {
+            method: 'POST'
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.detail);
+
+        alert("¡Socio Registrado! Puntos iniciales: 0");
+
+        // Cerrar modal (Bootstrap 5 vanilla way if instance exists, or simple DOM manipulation hide)
+        // Simplest: Reload or manually hide. Let's manually fill search to "login" immediately.
+        document.getElementById('buscadorSocio').value = tel;
+        buscarSocio(); // Auto-login
+
+        // Cerrar modal sucio (backdrop might stay but works for demo)
+        const modalEl = document.getElementById('modalRegistroSocio');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+}

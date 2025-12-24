@@ -35,6 +35,7 @@
                 <a href="escuela.html" class="btn btn-outline-light btn-sm">Escuela</a>
                 <a href="instructores.html" class="btn btn-outline-light btn-sm">Profesores</a>
                 <a href="acceso.html" class="btn btn-outline-light btn-sm">Acceso</a>
+                <a href="top_clientes.html" class="btn btn-outline-warning btn-sm">🏆 Top</a>
                 <a href="corte_instructores.html" class="btn btn-warning btn-sm text-dark">Corte</a>
             </div>
         </div>
@@ -51,6 +52,24 @@
                         <i class="bi bi-cart-plus-fill" style="font-size: 1.5rem;"></i>
                     </div>
                     <div class="card-body">
+
+                        <!-- BARRA DE BÚSQUEDA SOCIO -->
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" id="buscadorSocio" class="form-control"
+                                placeholder="Celular del Socio (Opcional)">
+                            <button class="btn btn-outline-secondary" onclick="buscarSocio()">Buscar</button>
+                        </div>
+                        <div id="infoSocio" class="alert alert-warning d-none p-2">
+                            <small>Socio: <b id="lblSocioNombre"></b> | Puntos: <b id="lblSocioPuntos"></b></small>
+                            <input type="hidden" id="valClienteId">
+                        </div>
+                        <div class="text-end mb-2">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modalRegistroSocio" class="small">¿No es
+                                socio? Regístrate</a>
+                        </div>
+
+                        <hr>
 
                         <h5 class="text-primary"><i class="bi bi-clock"></i> Tiempo de Pista</h5>
                         <select id="selectTarifa" class="form-select mb-3 form-select-lg">
@@ -111,7 +130,24 @@
         </div>
     </div>
 
-    <script src="app.js?v=4"></script>
+    <!-- Modal Registro Socio -->
+    <div class="modal fade" id="modalRegistroSocio" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">🌟 Nuevo Socio Club</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="regNombre" class="form-control mb-2" placeholder="Nombre Completo">
+                    <input type="tel" id="regTel" class="form-control mb-2" placeholder="Celular (ID Único)">
+                    <button onclick="registrarSocio()" class="btn btn-warning w-100">Registrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=5"></script>
 </body>
 
 </html>
