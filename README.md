@@ -41,6 +41,12 @@ El sistema prioriza la **seguridad financiera** y la **integridad operativa**, e
 * **Control de Pagos**: Seguimiento de mensualidades, inscripciones y vigencias.
 * **Nómina de Instructores**: Cálculo de comisiones por clases particulares impartidas.
 
+### 5. 🌟 Club Pista (Lealtad de Clientes)
+* **Sistema de Puntos**: "Gamificación" automática donde $10 MXN de compra equivalen a 1 Punto.
+* **Identificación Segura**: Login mediante número celular (no requiere tarjetas físicas).
+* **Leaderboard (Tablero de Líderes)**: Pantalla de "Top Clientes del Mes" para fomentar la competencia y aumentar el ticket promedio.
+* **Privacidad Primero**: Cumple con GDPR/ARCO mediante la función de "Derecho al Olvido" (anonimización de datos personales manteniendo el historial contable).
+
 ---
 
 ## 🛠️ Arquitectura Técnica
