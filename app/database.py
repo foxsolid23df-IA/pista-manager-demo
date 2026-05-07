@@ -14,7 +14,7 @@ PORT = os.getenv("POSTGRES_PORT")
 DB_NAME = os.getenv("POSTGRES_DB")
 
 # 2. Crear la URL de conexión (Connection String)
-SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}"
+SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}?sslmode=require"
 
 # 3. Crear el motor (Engine)
 # pool_pre_ping=True ayuda a reconectar si la BD se cae momentáneamente
