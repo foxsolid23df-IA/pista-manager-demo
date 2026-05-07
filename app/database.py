@@ -14,12 +14,17 @@ PORT = os.getenv("POSTGRES_PORT")
 DB_NAME = os.getenv("POSTGRES_DB")
 
 # 2. Crear la URL de conexión (Connection String)
-SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}?sslmode=require"
+SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}"
 
 # 3. Crear el motor (Engine)
 # pool_pre_ping=True ayuda a reconectar si la BD se cae momentáneamente
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, pool_pre_ping=True
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,
+    connect_args={
+        "sslmode": "require",
+        "sslrootcert": "/etc/ssl/certs/ca-certificates.crt"
+    }
 )
 
 # 4. Crear la fábrica de sesiones (SessionLocal)
