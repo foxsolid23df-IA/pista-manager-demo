@@ -22,7 +22,7 @@ engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
         connect_args={
-        "sslmode": "require"
+    "sslmode": "require"
     }
 )
 
