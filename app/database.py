@@ -35,7 +35,15 @@ if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://")
 # Si no es localhost, activamos SSL para Render
 connect_args = {}
 if SQLALCHEMY_DATABASE_URL and "localhost" not in SQLALCHEMY_DATABASE_URL:
+    # Render Managed Postgres requiere sslmode=require para conexiones externas
     connect_args = {"sslmode": "require"}
+    
+    # Validación extra: Si el hostname tiene '-a' es interno y fallará desde otras regiones
+    if "-a." in SQLALCHEMY_DATABASE_URL:
+        print("ADVERTENCIA: Estás usando un hostname interno ('-a') en una conexión externa.")
+        print("Si el servicio está en otra región de Render, la conexión fallará.")
+
+print(f"INFO: Iniciando motor de base de datos con SSL: {'sslmode=require' if connect_args else 'No'}")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, 
