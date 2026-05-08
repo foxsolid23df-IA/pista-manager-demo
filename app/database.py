@@ -10,47 +10,36 @@ import ssl
 load_dotenv()
 
 # Priorizamos DATABASE_URL (estándar en Render)
-# Si es una URL de ejemplo (contiene 'hostname' o 'port'), la ignoramos
+# Render proporciona la URL en la variable DATABASE_URL
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
-if SQLALCHEMY_DATABASE_URL and ("hostname" in SQLALCHEMY_DATABASE_URL or "port" in SQLALCHEMY_DATABASE_URL):
-    SQLALCHEMY_DATABASE_URL = None
 
 if not SQLALCHEMY_DATABASE_URL:
-    # Si no hay DATABASE_URL, construimos una con las variables individuales
-    USER = os.getenv("POSTGRES_USER")
-    PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    SERVER = os.getenv("POSTGRES_SERVER")
+    # Si no hay DATABASE_URL, intentamos construirla con variables individuales
+    SERVER = os.getenv("POSTGRES_SERVER", "localhost")
+    USER = os.getenv("POSTGRES_USER", "postgres")
+    PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+    DB_NAME = os.getenv("POSTGRES_DB", "pista_hielo_db")
     PORT = os.getenv("POSTGRES_PORT", "5432")
-    
-    # Aseguramos que el puerto sea un número, si no, usamos el default
-    if not PORT or not PORT.isdigit():
-        PORT = "5432"
-        
-    DB_NAME = os.getenv("POSTGRES_DB")
-    
-    # Escapamos usuario y contraseña por si tienen caracteres especiales (@, #, /)
-    safe_user = urllib.parse.quote_plus(USER) if USER else ""
-    safe_password = urllib.parse.quote_plus(PASSWORD) if PASSWORD else ""
-    
-    SQLALCHEMY_DATABASE_URL = f"postgresql://{safe_user}:{safe_password}@{SERVER}:{PORT}/{DB_NAME}"
+    SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}"
 
-# 2. Corrección de protocolo y dialecto
-# Usamos pg8000 (Pure Python) para máxima compatibilidad con SSL y evitar errores de compilación
-if SQLALCHEMY_DATABASE_URL:
-    if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
-    elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
-        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
+# Ajuste para compatibilidad de drivers en Render/SQLAlchemy
+# 1. Corregir el prefijo 'postgres://' a 'postgresql://' (común en Heroku/Render)
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# 3. Limpiar parámetros de SSL de la URL si existen para manejarlos en connect_args
-# Esto evita duplicados o conflictos
-if SQLALCHEMY_DATABASE_URL and "?sslmode=" in SQLALCHEMY_DATABASE_URL:
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.split("?")[0]
+# 2. Opcional: Forzar pg8000 si se desea evitar dependencias de C (aunque ya están en Dockerfile)
+# Si prefieres seguir usando pg8000, descomenta las siguientes líneas:
+# if "pg8000" not in SQLALCHEMY_DATABASE_URL:
+#     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 
-# Debug sanitized URL
+# Depuración (ocultando el password)
 debug_url = SQLALCHEMY_DATABASE_URL
-if debug_url and "@" in debug_url:
-    debug_url = debug_url.split("@")[-1]
+if ":" in debug_url and "@" in debug_url:
+    parts = debug_url.split("@")
+    scheme_user = parts[0].split(":")
+    if len(scheme_user) > 2:
+        debug_url = f"{scheme_user[0]}:{scheme_user[1]}:****@{parts[1]}"
+
 print(f"INFO: Intentando conectar a: {debug_url}")
 
 # 4. Crear el motor (Engine) con configuraciones robustas para Render

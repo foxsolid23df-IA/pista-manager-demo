@@ -23,4 +23,4 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 COPY . /code/
 
 # 7. Comando para arrancar la app (Usamos host 0.0.0.0 para que sea visible desde fuera)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

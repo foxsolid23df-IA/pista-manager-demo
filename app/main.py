@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.staticfiles import StaticFiles # <--- NUEVO: Importar esto
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from datetime import datetime
@@ -57,7 +58,8 @@ app.include_router(lealtad.router)
 
 @app.get("/")
 def home():
-    return {"mensaje": "Servidor de Pista de Hielo Activo y Corriendo 🚀"}
+    """Redirige automáticamente a la interfaz de usuario"""
+    return RedirectResponse(url="/ui")
 
 @app.get("/tarifas/", response_model=list[schemas.TarifaResponse])
 def listar_tarifas(db: Session = Depends(get_db)):
