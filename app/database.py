@@ -27,10 +27,9 @@ if not SQLALCHEMY_DATABASE_URL:
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# 2. Opcional: Forzar pg8000 si se desea evitar dependencias de C (aunque ya están en Dockerfile)
-# Si prefieres seguir usando pg8000, descomenta las siguientes líneas:
-# if "pg8000" not in SQLALCHEMY_DATABASE_URL:
-#     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
+# 2. Forzar pg8000 para evitar dependencias de C y manejar SSL correctamente
+if "pg8000" not in SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 
 # Depuración (ocultando el password)
 debug_url = SQLALCHEMY_DATABASE_URL
