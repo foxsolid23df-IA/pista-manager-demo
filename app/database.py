@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
+import urllib.parse
 
 # 1. Cargar variables del archivo .env
 load_dotenv()
@@ -25,7 +26,12 @@ if not SQLALCHEMY_DATABASE_URL:
         PORT = "5432"
         
     DB_NAME = os.getenv("POSTGRES_DB")
-    SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}"
+    
+    # Escapamos usuario y contraseña por si tienen caracteres especiales (@, #, /)
+    safe_user = urllib.parse.quote_plus(USER) if USER else ""
+    safe_password = urllib.parse.quote_plus(PASSWORD) if PASSWORD else ""
+    
+    SQLALCHEMY_DATABASE_URL = f"postgresql://{safe_user}:{safe_password}@{SERVER}:{PORT}/{DB_NAME}"
 
 # 2. Corrección de protocolo y dialecto
 # SQLAlchemy 2.0 prefiere 'postgresql+psycopg2://'
@@ -52,16 +58,21 @@ connect_args = {}
 if SQLALCHEMY_DATABASE_URL and "localhost" not in SQLALCHEMY_DATABASE_URL:
     connect_args = {
         "sslmode": "require",
-        "connect_timeout": 10  # Aumentamos el timeout para handshakes entre regiones
+        "connect_timeout": 15, # Aumentado a 15 para handshakes lentos
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5
     }
 
+# Intentamos primero con psycopg2, si falla mucho el usuario podría probar cambiar a pg8000
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args=connect_args,
     pool_pre_ping=True,     # Verifica que la conexión esté viva antes de usarla
     pool_recycle=300,       # Recicla conexiones cada 5 minutos
-    pool_size=5,            # Limitamos el pool para evitar saturar la BD gratuita de Render
-    max_overflow=10
+    pool_size=10,
+    max_overflow=20
 )
 
 # 4. Crear la fábrica de sesiones (SessionLocal)
