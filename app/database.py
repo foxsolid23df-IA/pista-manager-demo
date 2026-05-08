@@ -21,9 +21,8 @@ SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_N
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={
-        "sslmode": "require",
-        "sslrootcert": "/etc/ssl/certs/ca-certificates.crt"
+        connect_args={
+        "sslmode": "require"
     }
 )
 
