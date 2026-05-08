@@ -22,8 +22,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Crear tablas si no existen (por seguridad)
-models.Base.metadata.create_all(bind=engine)
+# Crear tablas si no existen (con reintentos para robustez en la nube)
+import time
+from sqlalchemy.exc import OperationalError
+
+for i in range(5):
+    try:
+        print(f"INFO: Intentando crear tablas (intento {i+1}/5)...")
+        models.Base.metadata.create_all(bind=engine)
+        print("✅ Tablas verificadas/creadas con éxito.")
+        break
+    except OperationalError as e:
+        if i == 4:
+            print("❌ Error crítico: No se pudo conectar a la base de datos tras 5 intentos.")
+            raise e
+        print(f"⚠️ Reintento en 5 segundos debido a: {str(e)}")
+        time.sleep(5)
 
 # --- NUEVO: MONTAR CARPETA ESTÁTICA ---
 # Esto hace que todo lo que pongas en la carpeta /static sea accesible via web

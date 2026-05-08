@@ -27,28 +27,41 @@ if not SQLALCHEMY_DATABASE_URL:
     DB_NAME = os.getenv("POSTGRES_DB")
     SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}"
 
-# Corrección de protocolo: Render usa 'postgres://' pero SQLAlchemy requiere 'postgresql://'
-if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+# 2. Corrección de protocolo y dialecto
+# SQLAlchemy 2.0 prefiere 'postgresql+psycopg2://'
+if SQLALCHEMY_DATABASE_URL:
+    if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
-# 3. Crear el motor (Engine)
-# Si no es localhost, activamos SSL para Render
+# 3. Limpiar parámetros de SSL de la URL si existen para manejarlos en connect_args
+# Esto evita duplicados o conflictos
+if SQLALCHEMY_DATABASE_URL and "?sslmode=" in SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.split("?")[0]
+
+# Debug sanitized URL
+debug_url = SQLALCHEMY_DATABASE_URL
+if debug_url and "@" in debug_url:
+    debug_url = debug_url.split("@")[-1]
+print(f"INFO: Intentando conectar a: {debug_url}")
+
+# 4. Crear el motor (Engine) con configuraciones robustas para Render
+# Usamos connect_args para pasar parámetros directamente al driver psycopg2
 connect_args = {}
 if SQLALCHEMY_DATABASE_URL and "localhost" not in SQLALCHEMY_DATABASE_URL:
-    # Render Managed Postgres requiere sslmode=require para conexiones externas
-    connect_args = {"sslmode": "require"}
-    
-    # Validación extra: Si el hostname tiene '-a' es interno y fallará desde otras regiones
-    if "-a." in SQLALCHEMY_DATABASE_URL:
-        print("ADVERTENCIA: Estás usando un hostname interno ('-a') en una conexión externa.")
-        print("Si el servicio está en otra región de Render, la conexión fallará.")
-
-print(f"INFO: Iniciando motor de base de datos con SSL: {'sslmode=require' if connect_args else 'No'}")
+    connect_args = {
+        "sslmode": "require",
+        "connect_timeout": 10  # Aumentamos el timeout para handshakes entre regiones
+    }
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    pool_pre_ping=True,
-    connect_args=connect_args
+    SQLALCHEMY_DATABASE_URL,
+    connect_args=connect_args,
+    pool_pre_ping=True,     # Verifica que la conexión esté viva antes de usarla
+    pool_recycle=300,       # Recicla conexiones cada 5 minutos
+    pool_size=5,            # Limitamos el pool para evitar saturar la BD gratuita de Render
+    max_overflow=10
 )
 
 # 4. Crear la fábrica de sesiones (SessionLocal)
