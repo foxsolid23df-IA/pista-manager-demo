@@ -8,7 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Priorizamos DATABASE_URL (estándar en Render)
+# Si es una URL de ejemplo (contiene 'hostname' o 'port'), la ignoramos
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+if SQLALCHEMY_DATABASE_URL and ("hostname" in SQLALCHEMY_DATABASE_URL or "port" in SQLALCHEMY_DATABASE_URL):
+    SQLALCHEMY_DATABASE_URL = None
 
 if not SQLALCHEMY_DATABASE_URL:
     # Si no hay DATABASE_URL, construimos una con las variables individuales
@@ -16,6 +19,11 @@ if not SQLALCHEMY_DATABASE_URL:
     PASSWORD = os.getenv("POSTGRES_PASSWORD")
     SERVER = os.getenv("POSTGRES_SERVER")
     PORT = os.getenv("POSTGRES_PORT", "5432")
+    
+    # Aseguramos que el puerto sea un número, si no, usamos el default
+    if not PORT or not PORT.isdigit():
+        PORT = "5432"
+        
     DB_NAME = os.getenv("POSTGRES_DB")
     SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}"
 
