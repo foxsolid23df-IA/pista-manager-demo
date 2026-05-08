@@ -9,8 +9,9 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /code
 
 # 4. Instalamos dependencias del sistema (necesarias para psycopg2)
+# NUEVO:
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && apt-get install -y --no-install-recommends gcc libpq-dev ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
