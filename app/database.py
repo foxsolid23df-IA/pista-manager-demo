@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import urllib.parse
+import ssl
 
 # 1. Cargar variables del archivo .env
 load_dotenv()
@@ -34,12 +35,12 @@ if not SQLALCHEMY_DATABASE_URL:
     SQLALCHEMY_DATABASE_URL = f"postgresql://{safe_user}:{safe_password}@{SERVER}:{PORT}/{DB_NAME}"
 
 # 2. Corrección de protocolo y dialecto
-# SQLAlchemy 2.0 prefiere 'postgresql+psycopg2://'
+# Usamos pg8000 (Pure Python) para máxima compatibilidad con SSL y evitar errores de compilación
 if SQLALCHEMY_DATABASE_URL:
     if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
     elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
-        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 
 # 3. Limpiar parámetros de SSL de la URL si existen para manejarlos en connect_args
 # Esto evita duplicados o conflictos
@@ -53,24 +54,25 @@ if debug_url and "@" in debug_url:
 print(f"INFO: Intentando conectar a: {debug_url}")
 
 # 4. Crear el motor (Engine) con configuraciones robustas para Render
-# Usamos connect_args para pasar parámetros directamente al driver psycopg2
+# Configuramos SSL para pg8000
 connect_args = {}
 if SQLALCHEMY_DATABASE_URL and "localhost" not in SQLALCHEMY_DATABASE_URL:
+    # Para pg8000, creamos un contexto SSL
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE # Render usa certificados auto-firmados o de CA interna
+    
     connect_args = {
-        "sslmode": "require",
-        "connect_timeout": 15, # Aumentado a 15 para handshakes lentos
-        "keepalives": 1,
-        "keepalives_idle": 30,
-        "keepalives_interval": 10,
-        "keepalives_count": 5
+        "ssl_context": ssl_context,
+        "timeout": 15
     }
 
-# Intentamos primero con psycopg2, si falla mucho el usuario podría probar cambiar a pg8000
+# Usamos pg8000 como driver principal
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args=connect_args,
-    pool_pre_ping=True,     # Verifica que la conexión esté viva antes de usarla
-    pool_recycle=300,       # Recicla conexiones cada 5 minutos
+    pool_pre_ping=True,
+    pool_recycle=300,
     pool_size=10,
     max_overflow=20
 )
