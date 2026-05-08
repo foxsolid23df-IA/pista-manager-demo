@@ -64,17 +64,76 @@ El sistema sigue una arquitectura monolítica modular, donde el backend expone u
 """
 pdf.add_section('2. Arquitectura del Sistema', arch_text)
 
-db_text = """
-El modelo de datos se define en 'app/models.py' y consta de las siguientes entidades principales:
 
-1. SesionPatinaje: Representa un ticket vendido. Almacena hora de entrada/salida, costos, si rentó andadera, y el método de pago (Efectivo/Tarjeta).
-2. Instructor: Profesores de la escuela. Incluye tarifas de honorarios.
-3. RentaInstructor: Tabla intermedia que vincula una sesión de patinaje con un instructor para clases particulares, controlando el estado de pago del honorario.
-4. Alumno: Estudiantes de la escuela (Artistico/Hockey).
-5. PagoEscuela: Registro de mensualidades e inscripciones.
-6. ReservaEvento: Gestión de fiestas y rentas completas.
+db_text = """
+El modelo de datos relacional se estructura de la siguiente manera:
+
+[ T. TARIFAS ]
++ id (PK)
++ nombre
++ costo_base
++ minutos_base
++ costo_minuto_extra
+^
+| (1:N)
+|
+[ T. SESIONES_PATINAJE ] <-------(1:N)------- [ T. CLIENTES_FRECUENTES ] (Opcional)
++ id (PK)                                     + id (PK)
++ ticket_id (UUID)                            + nombre
++ hora_entrada                                + telefono (Unique)
++ hora_salida                                 + puntos_acumulados
++ cliente_id (FK) --------------------------->+ nivel
++ metodo_pago
++ tarifa_id (FK)
+|
+| (1:N)
+v
+[ T. RENTA_INSTRUCTOR ] --------------------> [ T. INSTRUCTORES ]
++ id (PK)                                     + id (PK)
++ sesion_id (FK)                              + nombre
++ instructor_id (FK) <----------------------- + honorarios_por_sesion
+
+[ T. ALUMNOS ]
++ id (PK)
++ nombre
++ disciplina
+     ^
+     | (1:N)
+     v
+[ T. PAGOS_ESCUELA ]
++ id (PK)
++ monto
++ concepto
 """
-pdf.add_section('3. Modelo de Base de Datos', db_text)
+pdf.add_section('3. Diagrama de Entidad-Relación (ER)', db_text)
+
+loyalty_text = """
+Ubicación: app/routers/lealtad.py
+
+Este módulo implementa un sistema de gamificación para fidelizar clientes.
+- Lógica de Puntos: 1 Punto por cada $10.00 MXN gastados.
+- Identificación: Número celular (sin tarjetas físicas).
+- Privacidad: Soporte para 'Derecho al Olvido' (anonimización).
+
+Endpoints Principales:
+1. POST /lealtad/registro/ -> Alta rápida en modal.
+2. GET /lealtad/buscar/{telefono} -> Búsqueda en tiempo real durante la venta.
+3. GET /lealtad/top-mensual/ -> Genera el 'Leaderboard' filtrando por mes y año. Calcula el total de puntos ganados y visitas.
+4. DELETE /lealtad/eliminar-datos/{id} -> Cumplimiento GDPR/ARCO.
+"""
+pdf.add_section('5. Módulo Club Pista (Lealtad)', loyalty_text)
+
+maintenance_text = """
+Para garantizar la continuidad operativa en producción, se incluyeron herramientas de mantenimiento:
+
+- GET /admin/reparar-tablas/: Script de emergencia que detecta si faltan columnas nuevas (ej. 'cliente_id' o 'metodo_pago') en la base de datos de producción y las agrega sin perder datos existentes (ALTER TABLE IF NOT EXISTS).
+"""
+pdf.add_section('7. Mantenimiento y Migraciones', maintenance_text)
+
+# Guardar PDF
+filename = "Documentacion_Pista_Manager.pdf"
+pdf.output(filename, 'F')
+print(f"PDF generado exitosamente: {filename}")
 
 api_text = """
 Ubicación: app/main.py y app/routers/
