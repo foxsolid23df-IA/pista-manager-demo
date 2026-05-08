@@ -20,10 +20,7 @@ SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB_N
 # pool_pre_ping=True ayuda a reconectar si la BD se cae momentáneamente
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    pool_pre_ping=True,
-        connect_args={
-    "sslmode": "require"
-    }
+    pool_pre_ping=True
 )
 
 # 4. Crear la fábrica de sesiones (SessionLocal)
